@@ -1,2 +1,2 @@
-# Hor-rio_Escolar
+# Horário Escolar
 Repositório para horário escolar
