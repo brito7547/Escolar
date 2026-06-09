@@ -2,7 +2,7 @@
   "name": "Horário Escolar",
   "short_name": "Horário",
   "description": "Horário, tarefas e sala compartilhada",
-  "start_url": "./index.html",
+  "start_url": "/Escolar/index.html",
   "display": "standalone",
   "background_color": "#0b1120",
   "theme_color": "#0f172a",
