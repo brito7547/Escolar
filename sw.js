@@ -1,5 +1,5 @@
 const CACHE = "horario-v1";
-const ASSETS = ["index.html", "/Escolar/manifest.json"];
+"start_url": "/Escolar/index.html",
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
