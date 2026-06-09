@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Horário</title>
+  <link rel="manifest" href="/Escolar/manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Horário">
+  <link rel="apple-touch-icon" href="/Escolar/icons/icon-192.png">
+
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #141e2e;
+      --surface2: #1a2540;
+      --border: #243050;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --accent: #38bdf8;
+      --accent-dim: #0ea5e930;
+      --danger: #f87171;
+      --success: #34d399;
+      --warn: #fbbf24;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+
+    /* ── NAV ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: calc(64px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 100;
+    }
+    .nav-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      transition: color .15s;
+      padding-bottom: 2px;
+    }
+    .nav-btn svg { width: 22px; height: 22px; }
+    .nav-btn.active { color: var(--accent); }
+    .nav-btn .badge {
+      position: absolute;
+      top: 8px;
+      background: var(--danger);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 99px;
+      padding: 1px 5px;
+      min-width: 16px;
+      text-align: center;
+      line-height: 14px;
+    }
+    .nav-btn { position: relative; }
+
+    /* ── PAGES ── */
+    .page { display: none; padding: 0 0 16px; }
+    .page.active { display: block; }
+
+    .page-header {
+      padding: 20px 16px 12px;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -.5px;
+    }
+    .page-header span { color: var(--accent); }
+
+    /* ── DIAS ── */
+    .dias-scroll {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .dias-scroll::-webkit-scrollbar { display: none; }
+    .btn-dia {
+      flex: none;
+      padding: 8px 16px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .btn-dia.ativo {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0b1120;
+    }
+
+    /* ── CARDS ── */
+    .container { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .aula-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .aula-item:last-child { border-bottom: none; }
+    .aula-num {
+      font-size: 11px;
+      color: var(--muted);
+      width: 18px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .livro-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 13px;
+      margin: 3px;
+    }
+
+    /* ── TAREFAS ── */
+    .add-form {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 12px;
+    }
+    .add-form input, .add-form select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .add-form input:focus, .add-form select:focus { border-color: var(--accent); }
+    .add-form input { flex: 1; }
+    .add-form select { width: 130px; flex-shrink: 0; }
+    .btn-add {
+      background: var(--accent);
+      color: #0b1120;
+      border: none;
+      border-radius: 10px;
+      width: 42px;
+      height: 42px;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 700;
+    }
+
+    .tarefa-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .tarefa-item:last-child { border-bottom: none; }
+    .tarefa-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      background: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+      margin-top: 1px;
+    }
+    .tarefa-check.done {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    .tarefa-info { flex: 1; }
+    .tarefa-titulo {
+      font-size: 14px;
+      line-height: 1.4;
+      transition: opacity .2s;
+    }
+    .tarefa-titulo.done {
+      text-decoration: line-through;
+      opacity: .45;
+    }
+    .tarefa-meta {
+      display: flex;
+      gap: 8px;
+      margin-top: 3px;
+      align-items: center;
+    }
+    .tag-materia {
+      font-size: 11px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-weight: 600;
+    }
+    .tag-prazo {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .tag-prazo.urgente { color: var(--danger); font-weight: 600; }
+    .tag-prazo.hoje { color: var(--warn); font-weight: 600; }
+    .tarefa-del {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px 4px;
+      border-radius: 6px;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    .tarefa-item:hover .tarefa-del { opacity: 1; }
+    .tarefa-del:hover { color: var(--danger); }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      padding: 0 16px 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      flex: none;
+      padding: 5px 12px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .filter-chip.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── SALA ── */
+    .sala-setup {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .sala-input-group { display: flex; flex-direction: column; gap: 6px; }
+    .sala-input-group label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .sala-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: 15px;
+      outline: none;
+      width: 100%;
+      transition: border-color .15s;
+    }
+    .sala-input:focus { border-color: var(--accent); }
+    .btn-primary {
+      background: var(--accent);
+      color: #0b1120;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .85; }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .sala-header {
+      padding: 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sala-nome { font-size: 15px; font-weight: 700; }
+    .sala-codigo {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .sala-codigo:hover { border-color: var(--accent); color: var(--accent); }
+
+    .online-dot {
+      width: 8px; height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .autor-tag {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Supabase setup banner */
+    .setup-banner {
+      margin: 16px;
+      background: #1a1a00;
+      border: 1px solid #facc1520;
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .setup-banner-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--warn);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .setup-banner p { font-size: 12px; color: #94a3b8; line-height: 1.6; }
+    .setup-banner a { color: var(--accent); }
+    .setup-banner code {
+      background: var(--surface2);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 11px;
+      font-family: monospace;
+    }
+    .btn-config {
+      background: var(--warn);
+      color: #0b1120;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    /* Config modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: #00000090;
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      padding: 0;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .modal h3 { font-size: 17px; }
+    .modal p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 22px;
+      cursor: pointer;
+      align-self: flex-end;
+      margin-bottom: -8px;
+    }
+
+    .section-sep {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* Skeleton loader */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+      height: 36px;
+      margin: 6px 0;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    .toast {
+      position: fixed;
+      bottom: calc(72px + 12px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      opacity: 0;
+      transition: all .3s;
+      z-index: 150;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════ PAGE: HORÁRIO ══════════ -->
+<div class="page active" id="page-horario">
+  <div class="page-header">Hoje: <span id="titulo-dia">—</span></div>
+  <div class="dias-scroll" id="botoesDias"></div>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">Aulas do dia</div>
+      <div id="lista-aulas"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Levar livros</div>
+      <div id="lista-livros" style="display:flex;flex-wrap:wrap;gap:0;margin:-3px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE: TAREFAS ══════════ -->
+<div class="page" id="page-tarefas">
+  <div class="page-header">Atividades</div>
+
+  <div class="add-form">
+    <input type="text" id="input-tarefa" placeholder="Nova atividade..." maxlength="120">
+    <select id="select-materia">
+      <option value="">Matéria</option>
+      <option>Redação</option>
+      <option>Português</option>
+      <option>Matemática</option>
+      <option>História</option>
+      <option>Geografia</option>
+      <option>Biologia</option>
+      <option>Química</option>
+      <option>Física</option>
+      <option>Filosofia</option>
+      <option>Sociologia</option>
+      <option>Inglês</option>
+      <option>Arte</option>
+      <option>Ed. Física</option>
+      <option>Formação Cidadã</option>
+      <option>C. Natureza ENEM</option>
+      <option>C. Humanas ENEM</option>
+      <option>Linguagens ENEM</option>
+      <option>Matemática ENEM</option>
+      <option>Outro</option>
+    </select>
+    <button class="btn-add" id="btn-add-tarefa" title="Adicionar">+</button>
+  </div>
+
+  <div class="filter-row" id="filtros"></div>
+
+  <div class="container" style="padding-top:4px;">
+    <div class="card" id="card-tarefas">
+      <div id="lista-tarefas"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE: SALA ══════════ -->
+<div class="page" id="page-sala">
+
+  <!-- Config banner (shown until Supabase configured) -->
+  <div class="setup-banner" id="supabase-banner">
+    <div class="setup-banner-title">⚠️ Configure o Supabase</div>
+    <p>Para a sala funcionar você precisa de uma conta gratuita no Supabase. Leva ~3 minutos.</p>
+    <button class="btn-config" id="btn-abrir-config">Configurar agora</button>
+  </div>
+
+  <!-- Setup screen (shown when not in a room) -->
+  <div id="sala-setup-screen">
+    <div class="page-header">Sala</div>
+    <div class="sala-setup">
+      <div class="sala-input-group">
+        <label>Seu nome</label>
+        <input class="sala-input" type="text" id="input-nome-usuario" placeholder="Ex: Ana, João..." maxlength="30">
+      </div>
+      <div class="section-sep"></div>
+      <button class="btn-primary" id="btn-criar-sala">Criar nova sala</button>
+      <div class="divider">ou entrar em uma existente</div>
+      <div class="sala-input-group">
+        <label>Código da sala</label>
+        <input class="sala-input" type="text" id="input-codigo" placeholder="Ex: ABC123" maxlength="8" style="text-transform:uppercase;letter-spacing:.1em;">
+      </div>
+      <button class="btn-secondary" id="btn-entrar-sala">Entrar na sala</button>
+    </div>
+  </div>
+
+  <!-- Active room screen -->
+  <div id="sala-ativa-screen" style="display:none;">
+    <div class="sala-header">
+      <div>
+        <div class="sala-nome" id="sala-nome-display">—</div>
+        <div style="font-size:12px;margin-top:2px;">
+          <span class="online-dot"></span>
+          <span id="sala-membros">—</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="sala-codigo" id="sala-codigo-display" title="Clique para copiar">—</div>
+        <button id="btn-sair-sala" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;" title="Sair da sala">↩</button>
+      </div>
+    </div>
+
+    <div class="add-form" style="padding-top:12px;">
+      <input type="text" id="input-sala-tarefa" placeholder="Adicionar atividade para a sala..." maxlength="120">
+      <select id="select-sala-materia">
+        <option value="">Matéria</option>
+        <option>Redação</option>
+        <option>Português</option>
+        <option>Matemática</option>
+        <option>História</option>
+        <option>Geografia</option>
+        <option>Biologia</option>
+        <option>Química</option>
+        <option>Física</option>
+        <option>Filosofia</option>
+        <option>Sociologia</option>
+        <option>Inglês</option>
+        <option>Arte</option>
+        <option>Ed. Física</option>
+        <option>Formação Cidadã</option>
+        <option>C. Natureza ENEM</option>
+        <option>C. Humanas ENEM</option>
+        <option>Linguagens ENEM</option>
+        <option>Matemática ENEM</option>
+        <option>Outro</option>
+      </select>
+      <button class="btn-add" id="btn-add-sala-tarefa" title="Adicionar">+</button>
+    </div>
+
+    <div class="container" style="padding-top:4px;">
+      <div class="card">
+        <div class="card-title">Atividades da sala</div>
+        <div id="lista-sala-tarefas"><div class="skeleton"></div><div class="skeleton"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIG MODAL ── -->
+<div class="modal-overlay hidden" id="modal-config">
+  <div class="modal">
+    <button class="modal-close" id="btn-fechar-modal">✕</button>
+    <h3>Configurar Supabase</h3>
+    <p>
+      1. Crie uma conta em <a href="https://supabase.com" target="_blank">supabase.com</a><br>
+      2. Crie um projeto gratuito<br>
+      3. Vá em <strong>SQL Editor</strong> e rode este script:
+    </p>
+    <div style="background:var(--surface2);border-radius:8px;padding:10px;font-size:11px;font-family:monospace;color:#94a3b8;line-height:1.7;overflow-x:auto;white-space:pre;">
+create table if not exists sala_tarefas (
+  id uuid default gen_random_uuid() primary key,
+  sala_id text not null,
+  titulo text not null,
+  materia text,
+  autor text,
+  feita boolean default false,
+  criado_em timestamptz default now()
+);
+create index on sala_tarefas(sala_id);
+alter table sala_tarefas enable row level security;
+create policy "public" on sala_tarefas for all using (true);
+    </div>
+    <p>4. Vá em <strong>Project Settings → API</strong> e copie a <strong>URL</strong> e a chave <strong>anon/public</strong>.</p>
+    <div class="sala-input-group">
+      <label>Supabase URL</label>
+      <input class="sala-input" type="url" id="input-sb-url" placeholder="https://xxxx.supabase.co">
+    </div>
+    <div class="sala-input-group">
+      <label>Chave anon</label>
+      <input class="sala-input" type="text" id="input-sb-key" placeholder="eyJh...">
+    </div>
+    <button class="btn-primary" id="btn-salvar-config">Salvar e conectar</button>
+  </div>
+</div>
+
+<!-- ── BOTTOM NAV ── -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-horario" onclick="navTo('horario')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+    Horário
+  </button>
+  <button class="nav-btn" id="nav-tarefas" onclick="navTo('tarefas')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+    </svg>
+    <span class="badge" id="badge-tarefas" style="display:none;">0</span>
+    Tarefas
+  </button>
+  <button class="nav-btn" id="nav-sala" onclick="navTo('sala')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+    </svg>
+    Sala
+  </button>
+</nav>
+
+<script>
+// ════════════════════════════════════
+//  HORÁRIO
+// ════════════════════════════════════
+const horario = {
+  segunda: ["Redação","Ciências da Natureza ENEM","Redação","Ciências Humanas ENEM","Ciências Humanas ENEM","Ciências da Natureza ENEM"],
+  terca:   ["Filosofia","História","Português","Matemática","Inglês","Matemática ENEM"],
+  quarta:  ["Português","Formação Cidadã","Matemática","Biologia","Física","Ed. Física"],
+  quinta:  ["Linguagens ENEM","Linguagens ENEM","Química","Português","Sociologia","Arte"],
+  sexta:   ["Geografia","Matemática ENEM","História","Geografia","Matemática","Formação Cidadã"]
+};
+const materiasComLivro = ["Redação","Filosofia","História","Português","Matemática","Inglês","Biologia","Física","Ed. Física","Sociologia","Arte","Geografia"];
+const diasNomes = { segunda:"Segunda",terca:"Terça",quarta:"Quarta",quinta:"Quinta",sexta:"Sexta" };
+const diasKeys = ["segunda","terca","quarta","quinta","sexta"];
+
+const hojeIndex = new Date().getDay() - 1;
+let diaAtual = diasKeys[hojeIndex] ?? "segunda";
+
+const botoesDiv = document.getElementById("botoesDias");
+diasKeys.forEach(dia => {
+  const btn = document.createElement("button");
+  btn.textContent = diasNomes[dia];
+  btn.className = "btn-dia" + (dia === diaAtual ? " ativo" : "");
+  btn.onclick = () => { diaAtual = dia; renderHorario(); };
+  botoesDiv.appendChild(btn);
+});
+
+function renderHorario() {
+  document.getElementById("titulo-dia").textContent = diasNomes[diaAtual] ?? diaAtual;
+  const aulas = horario[diaAtual] || [];
+  const livros = [...new Set(aulas.filter(a => materiasComLivro.includes(a)))];
+
+  const listaAulas = document.getElementById("lista-aulas");
+  listaAulas.innerHTML = aulas.length
+    ? aulas.map((a,i) => `<div class="aula-item"><span class="aula-num">${i+1}</span>${a}</div>`).join("")
+    : "<div style='color:var(--muted);font-size:14px;'>Sem aulas</div>";
+
+  const listaLivros = document.getElementById("lista-livros");
+  listaLivros.innerHTML = livros.length
+    ? livros.map(l => `<div class="livro-tag">📖 ${l}</div>`).join("")
+    : "<span style='color:var(--muted);font-size:14px;'>Nenhum</span>";
+
+  document.querySelectorAll(".btn-dia").forEach(b =>
+    b.classList.toggle("ativo", b.textContent === diasNomes[diaAtual])
+  );
+}
+renderHorario();
+
+// ════════════════════════════════════
+//  TAREFAS LOCAIS
+// ════════════════════════════════════
+let tarefas = JSON.parse(localStorage.getItem("tarefas") || "[]");
+let filtroAtivo = "todas";
+
+function salvarTarefas() {
+  localStorage.setItem("tarefas", JSON.stringify(tarefas));
+  renderTarefas();
+  atualizarBadge();
+}
+
+function atualizarBadge() {
+  const pendentes = tarefas.filter(t => !t.feita).length;
+  const badge = document.getElementById("badge-tarefas");
+  badge.style.display = pendentes > 0 ? "block" : "none";
+  badge.textContent = pendentes;
+}
+
+function renderFiltros() {
+  const materias = [...new Set(tarefas.map(t => t.materia).filter(Boolean))];
+  const filtros = ["todas", "pendentes", ...materias];
+  const div = document.getElementById("filtros");
+  div.innerHTML = filtros.map(f =>
+    `<button class="filter-chip${f===filtroAtivo?" active":""}" onclick="setFiltro('${f}')">${
+      f==="todas"?"Todas":f==="pendentes"?"Pendentes":f
+    }</button>`
+  ).join("");
+}
+
+function setFiltro(f) {
+  filtroAtivo = f;
+  renderFiltros();
+  renderTarefas();
+}
+
+function prazoLabel(prazo) {
+  if (!prazo) return "";
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const d = new Date(prazo + "T00:00:00");
+  const diff = Math.round((d-hoje)/(1000*60*60*24));
+  if (diff < 0) return `<span class="tag-prazo urgente">Venceu</span>`;
+  if (diff === 0) return `<span class="tag-prazo hoje">Hoje</span>`;
+  if (diff === 1) return `<span class="tag-prazo hoje">Amanhã</span>`;
+  return `<span class="tag-prazo">em ${diff}d</span>`;
+}
+
+function renderTarefas() {
+  let lista = tarefas;
+  if (filtroAtivo === "pendentes") lista = lista.filter(t => !t.feita);
+  else if (filtroAtivo !== "todas") lista = lista.filter(t => t.materia === filtroAtivo);
+
+  const div = document.getElementById("lista-tarefas");
+  if (!lista.length) {
+    div.innerHTML = `<div class="empty-state">${filtroAtivo==="pendentes"?"Nenhuma pendente 🎉":"Nenhuma atividade ainda"}</div>`;
+    return;
+  }
+  div.innerHTML = lista.map(t => `
+    <div class="tarefa-item">
+      <button class="tarefa-check ${t.feita?"done":""}" onclick="toggleTarefa('${t.id}')">
+        ${t.feita?`<svg width="12" height="12" viewBox="0 0 12 12" fill="white"><polyline points="1.5,6 5,9.5 10.5,2.5" stroke="white" stroke-width="2" fill="none"/></svg>`:""}
+      </button>
+      <div class="tarefa-info">
+        <div class="tarefa-titulo ${t.feita?"done":""}">${escHtml(t.titulo)}</div>
+        <div class="tarefa-meta">
+          ${t.materia?`<span class="tag-materia">${escHtml(t.materia)}</span>`:""}
+          ${prazoLabel(t.prazo)}
+        </div>
+      </div>
+      <button class="tarefa-del" onclick="deletarTarefa('${t.id}')" title="Remover">✕</button>
+    </div>
+  `).join("");
+  renderFiltros();
+}
+
+function toggleTarefa(id) {
+  const t = tarefas.find(t => t.id === id);
+  if (t) { t.feita = !t.feita; salvarTarefas(); }
+}
+
+function deletarTarefa(id) {
+  tarefas = tarefas.filter(t => t.id !== id);
+  salvarTarefas();
+}
+
+document.getElementById("btn-add-tarefa").onclick = () => {
+  const titulo = document.getElementById("input-tarefa").value.trim();
+  if (!titulo) return;
+  const materia = document.getElementById("select-materia").value;
+  tarefas.unshift({ id: uid(), titulo, materia, feita: false, criado: Date.now() });
+  document.getElementById("input-tarefa").value = "";
+  salvarTarefas();
+  showToast("Atividade adicionada");
+};
+
+document.getElementById("input-tarefa").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("btn-add-tarefa").click();
+});
+
+renderTarefas();
+atualizarBadge();
+
+// ════════════════════════════════════
+//  SUPABASE + SALA
+// ════════════════════════════════════
+const SB_URL = "https://qppzfsbcrihbwenmrwmw.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwcHpmc2JjcmloYndlbm1yd213Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMzU1MTksImV4cCI6MjA5NjYxMTUxOX0.ivprLHOD3R9Ii8sQqLhmyUm50aqBrZKoRvfExMnUpVg";
+let sbUrl = localStorage.getItem("sb_url") || SB_URL;
+let sbKey = localStorage.getItem("sb_key") || SB_KEY;
+let salaId = localStorage.getItem("sala_id") || "";
+let salaApelido = localStorage.getItem("sala_apelido") || "";
+let nomeUsuario = localStorage.getItem("nome_usuario") || "";
+let pollInterval = null;
+
+function sbConfigured() { return !!(sbUrl && sbKey); }
+
+function checkBanner() {
+  document.getElementById("supabase-banner").style.display = "none";
+}
+checkBanner();
+
+async function sbFetch(path, opts = {}) {
+  const res = await fetch(sbUrl + "/rest/v1" + path, {
+    headers: {
+      "apikey": sbKey,
+      "Authorization": "Bearer " + sbKey,
+      "Content-Type": "application/json",
+      "Prefer": opts.prefer || "return=representation",
+      ...opts.headers
+    },
+    method: opts.method || "GET",
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if (!res.ok) throw new Error(await res.text());
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+async function carregarSalaTarefas() {
+  if (!sbConfigured() || !salaId) return;
+  try {
+    const rows = await sbFetch(`/sala_tarefas?sala_id=eq.${salaId}&order=criado_em.asc`);
+    renderSalaTarefas(rows || []);
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function renderSalaTarefas(rows) {
+  const div = document.getElementById("lista-sala-tarefas");
+  if (!rows.length) {
+    div.innerHTML = `<div class="empty-state">Sala vazia — adicione a primeira atividade!</div>`;
+    return;
+  }
+  div.innerHTML = rows.map(r => `
+    <div class="tarefa-item">
+      <button class="tarefa-check ${r.feita?"done":""}" onclick="toggleSalaTarefa('${r.id}', ${r.feita})">
+        ${r.feita?`<svg width="12" height="12" viewBox="0 0 12 12" fill="white"><polyline points="1.5,6 5,9.5 10.5,2.5" stroke="white" stroke-width="2" fill="none"/></svg>`:""}
+      </button>
+      <div class="tarefa-info">
+        <div class="tarefa-titulo ${r.feita?"done":""}">${escHtml(r.titulo)}</div>
+        <div class="tarefa-meta">
+          ${r.materia?`<span class="tag-materia">${escHtml(r.materia)}</span>`:""}
+          <span class="autor-tag">por ${escHtml(r.autor||"?")}</span>
+        </div>
+      </div>
+      ${r.autor === nomeUsuario ? `<button class="tarefa-del" onclick="deletarSalaTarefa('${r.id}')" title="Remover">✕</button>` : ""}
+    </div>
+  `).join("");
+}
+
+async function toggleSalaTarefa(id, feita) {
+  try {
+    await sbFetch(`/sala_tarefas?id=eq.${id}`, { method: "PATCH", body: { feita: !feita } });
+    carregarSalaTarefas();
+  } catch(e) { showToast("Erro ao atualizar"); }
+}
+
+async function deletarSalaTarefa(id) {
+  try {
+    await sbFetch(`/sala_tarefas?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
+    carregarSalaTarefas();
+  } catch(e) { showToast("Erro ao deletar"); }
+}
+
+function entrarSala(id, apelido) {
+  salaId = id;
+  salaApelido = apelido;
+  localStorage.setItem("sala_id", id);
+  localStorage.setItem("sala_apelido", apelido);
+
+  document.getElementById("sala-setup-screen").style.display = "none";
+  document.getElementById("sala-ativa-screen").style.display = "block";
+  document.getElementById("sala-nome-display").textContent = "Sala " + apelido;
+  document.getElementById("sala-membros").textContent = "ao vivo";
+
+  const codeEl = document.getElementById("sala-codigo-display");
+  codeEl.textContent = apelido;
+  codeEl.onclick = () => {
+    navigator.clipboard?.writeText(apelido).then(() => showToast("Código copiado!"));
+  };
+
+  carregarSalaTarefas();
+  clearInterval(pollInterval);
+  pollInterval = setInterval(carregarSalaTarefas, 5000);
+}
+
+function sairSala() {
+  clearInterval(pollInterval);
+  salaId = ""; salaApelido = "";
+  localStorage.removeItem("sala_id");
+  localStorage.removeItem("sala_apelido");
+  document.getElementById("sala-setup-screen").style.display = "block";
+  document.getElementById("sala-ativa-screen").style.display = "none";
+}
+
+document.getElementById("btn-criar-sala").onclick = async () => {
+  if (!sbConfigured()) { openModal(); return; }
+  nomeUsuario = document.getElementById("input-nome-usuario").value.trim();
+  if (!nomeUsuario) { showToast("Coloca seu nome primeiro"); return; }
+  localStorage.setItem("nome_usuario", nomeUsuario);
+  const codigo = gerarCodigo();
+  entrarSala(codigo, codigo);
+  showToast("Sala criada! Compartilhe o código: " + codigo);
+};
+
+document.getElementById("btn-entrar-sala").onclick = async () => {
+  if (!sbConfigured()) { openModal(); return; }
+  nomeUsuario = document.getElementById("input-nome-usuario").value.trim();
+  if (!nomeUsuario) { showToast("Coloca seu nome primeiro"); return; }
+  localStorage.setItem("nome_usuario", nomeUsuario);
+  const codigo = document.getElementById("input-codigo").value.trim().toUpperCase();
+  if (!codigo) { showToast("Coloca o código da sala"); return; }
+  entrarSala(codigo, codigo);
+};
+
+document.getElementById("btn-sair-sala").onclick = sairSala;
+
+document.getElementById("btn-add-sala-tarefa").onclick = async () => {
+  const titulo = document.getElementById("input-sala-tarefa").value.trim();
+  if (!titulo) return;
+  const materia = document.getElementById("select-sala-materia").value;
+  try {
+    await sbFetch("/sala_tarefas", {
+      method: "POST",
+      body: { sala_id: salaId, titulo, materia: materia||null, autor: nomeUsuario, feita: false }
+    });
+    document.getElementById("input-sala-tarefa").value = "";
+    await carregarSalaTarefas();
+    showToast("Adicionado!");
+  } catch(e) { showToast("Erro ao adicionar"); console.error(e); }
+};
+
+document.getElementById("input-sala-tarefa").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("btn-add-sala-tarefa").click();
+});
+
+// Restaurar sala se já estava em uma
+if (sbConfigured() && salaId) {
+  document.getElementById("input-nome-usuario").value = nomeUsuario;
+  setTimeout(() => entrarSala(salaId, salaApelido), 100);
+}
+if (nomeUsuario) {
+  document.getElementById("input-nome-usuario").value = nomeUsuario;
+}
+
+// ── Config modal ──
+function openModal() {
+  document.getElementById("modal-config").classList.remove("hidden");
+  if (sbUrl) document.getElementById("input-sb-url").value = sbUrl;
+  if (sbKey) document.getElementById("input-sb-key").value = sbKey;
+}
+document.getElementById("btn-abrir-config").onclick = openModal;
+document.getElementById("btn-fechar-modal").onclick = () =>
+  document.getElementById("modal-config").classList.add("hidden");
+document.getElementById("modal-config").addEventListener("click", e => {
+  if (e.target === document.getElementById("modal-config"))
+    document.getElementById("modal-config").classList.add("hidden");
+});
+document.getElementById("btn-salvar-config").onclick = () => {
+  const url = document.getElementById("input-sb-url").value.trim().replace(/\/$/, "");
+  const key = document.getElementById("input-sb-key").value.trim();
+  if (!url || !key) { showToast("Preenche os dois campos"); return; }
+  sbUrl = url; sbKey = key;
+  localStorage.setItem("sb_url", url);
+  localStorage.setItem("sb_key", key);
+  document.getElementById("modal-config").classList.add("hidden");
+  checkBanner();
+  showToast("Supabase configurado! ✓");
+};
+
+// ════════════════════════════════════
+//  NAV
+// ════════════════════════════════════
+function navTo(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("page-" + page).classList.add("active");
+  document.getElementById("nav-" + page).classList.add("active");
+}
+
+// ════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════
+function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+function gerarCodigo() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2500);
+}
+</script>
+
+<!-- Service Worker registration -->
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/Escolar/sw.js').catch(console.error);
+}
+</script>
+
+</body>
+</html>
