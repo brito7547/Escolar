@@ -2,14 +2,14 @@
   "name": "Horário Escolar",
   "short_name": "Horário",
   "description": "Horário, tarefas e sala compartilhada",
-  "start_url": "/Escolar/index.html",
+  "start_url": "/Escolar/",
   "scope": "/Escolar/",
   "display": "standalone",
   "background_color": "#0b1120",
   "theme_color": "#0f172a",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "icons": [
-    { "src": "/Escolar/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/Escolar/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
